@@ -20,12 +20,12 @@ The IoCloud Datalogger monitors a collection of temperature, analog, and voltage
 
 ### 🔹 Topic Examples
 
-| Action     | Topic Example                             | Description                            |
-|:----------:|:-----------------------------------------:|:--------------------------------------:|
-| Read       | `device123/read/temperature/0`            | Auto-published temperature temperature |
-| Calibrate  | `device123/calibrate/request/analog/0`    | Send calibration message               |
-| Calibrate  | `device123/calibrate/response/analog/0`   | Send or receive calibration message    |
-| Status     | `device123/status/temperature/0`          | Sensor status report                   |
+| Action     | Topic Example                                     | Description                            |
+|:----------:|:-------------------------------------------------:|:--------------------------------------:|
+| Read       | `iocloud/device123/read/temperature/0`            | Auto-published temperature temperature |
+| Calibrate  | `iocloud/device123/calibrate/request/analog/0`    | Send calibration message               |
+| Calibrate  | `iocloud/device123/calibrate/response/analog/0`   | Send or receive calibration message    |
+| Status     | `iocloud/device123/status/temperature/0`          | Sensor status report                   |
 
 ---
 
@@ -44,19 +44,24 @@ The IoCloud Datalogger monitors a collection of temperature, analog, and voltage
 
 ```json
 {
-  "action": "start",
-  "reference_value": 12.0
+  "gain": 12.0,
+  "offset": 12.0,
 }
 ```
 
-### 🔁 Calibration Response
+### 🔁 Calibration Response Success
 
 ```json
 {
-  "sensor_id": "0",
-  "status": "success",
-  "adjusted_offset": -0.03,
-  "adjusted_gain": 1.52
+  "status": 0,
+}
+```
+
+### 🔁 Calibration Response Error
+
+```json
+{
+  "status": 201,
 }
 ```
 
@@ -64,10 +69,8 @@ The IoCloud Datalogger monitors a collection of temperature, analog, and voltage
 
 ```json
 {
-  "device_id": "device123",
   "uptime": 86400,
   "error_code": 0,
-  "message": "",
   "timestamp": "2025-06-01T14:00:00Z"
 }
 ```
@@ -76,10 +79,8 @@ The IoCloud Datalogger monitors a collection of temperature, analog, and voltage
 
 ```json
 {
-  "device_id": "device123",
   "uptime": 86400,
   "error_code": 102,
-  "message": "Sensor temperature_07 timeout",
   "timestamp": "2025-06-01T14:00:00Z"
 }
 ```
@@ -91,15 +92,15 @@ The IoCloud Datalogger monitors a collection of temperature, analog, and voltage
 | Sensor Type   | Sensor ID Range  | Description             |
 |:-------------:|:----------------:|:-----------------------:|
 | `temperature` | `0`–`19`         | Temperature Sensors     |
-| `analog`      | `0`–`1`          | 4–20 mA Analog Sensors  |
-| `voltage`     | `0`              | Voltage Sensor (0–10 V) |
-| `current`     | `0`              | Current Sensor (0–10 A) |
+| `analog`      | `20`–`21`        | 4–20 mA Analog Sensors  |
+| `voltage`     | `22`             | Voltage Sensor (0–10 V) |
+| `current`     | `23`             | Current Sensor (0–10 A) |
 
 ---
 
 ## ✅ Best Practices
 
-- Subscribe to `<device_id>/read/+/#` to receive all sensor data from a device.
+- Subscribe to `iocloud/<device_id>/read/+/#` to receive all sensor data from a device.
 - Use retained messages for status and error updates.
 - Validate calibration responses before applying corrections.
 - Use QoS 1 or higher for data reliability.
@@ -111,16 +112,14 @@ The IoCloud Datalogger monitors a collection of temperature, analog, and voltage
 
 ### Subscribe to all temperature readings from device123:
 ```bash
-mosquitto_sub -h mqtt.example.com -t "device123/read/temperature/+" -v
+mosquitto_sub -h mqtt.example.com -t "iocloud/device123/read/temperature/+" -v
 ```
 
 ### Send calibration for analog sensor 0 on device123:
 ```bash
-mosquitto_pub -h mqtt.example.com -t "device123/calibrate/request/analog/0" -m '{
-  "sensor_id": "0",
-  "sensor_type": "analog",
-  "action": "start",
-  "reference_value": 12.0
+mosquitto_pub -h mqtt.example.com -t "iocloud/device123/calibrate/request/analog/0" -m '{
+  "gain": 12.0,
+  "offset": 12.0,
 }'
 ```
 

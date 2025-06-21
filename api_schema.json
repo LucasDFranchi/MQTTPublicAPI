@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Application External Types",
+  "type": "object",
+  "definitions": {
+    "app_data_type_et": {
+      "type": "string",
+      "enum": ["DATA_TYPE_REPORT", "DATA_TYPE_COMMAND", "DATA_TYPE_COMMAND_RESPONSE"]
+    },
+    "command_index_et": {
+      "type": "string",
+      "enum": ["CMD_GET_TIME", "CMD_SET_CALIBRATION"]
+    },
+    "command_status_et": {
+      "type": "string",
+      "enum": ["COMMAND_SUCCESS", "COMMAND_FAIL", "COMMAND_CALIBRATION_FAIL"]
+    },
+    "sensor_report_st": {
+      "type": "object",
+      "properties": {
+        "value": { "type": "number" },
+        "active": { "type": "integer" }
+      },
+      "required": ["value", "active"]
+    },
+    "device_report_st": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$"
+        },
+        "sensors": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/sensor_report_st" }
+        },
+        "num_of_channels": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": ["timestamp", "sensors", "num_of_channels"]
+    },
+    "cmd_set_calibration_st": {
+      "type": "object",
+      "properties": {
+        "gain": { "type": "number" },
+        "offset": { "type": "number" }
+      },
+      "required": ["gain", "offset"]
+    },
+    "command_st": {
+      "type": "object",
+      "properties": {
+        "command_index": { "$ref": "#/definitions/command_index_et" },
+        "sensor_index": { "type": "integer" },
+        "command_u": {
+          "type": "object",
+          "properties": {
+            "set_calibration": { "$ref": "#/definitions/cmd_set_calibration_st" }
+          },
+          "required": []
+        }
+      },
+      "required": ["command_index", "sensor_index"]
+    },
+    "command_response_st": {
+      "type": "object",
+      "properties": {
+        "command_index": { "$ref": "#/definitions/command_index_et" },
+        "command_status": { "$ref": "#/definitions/command_status_et" },
+        "sensor_index": { "type": "integer" }
+      },
+      "required": ["command_index", "command_status", "sensor_index"]
+    }
+  }
+}

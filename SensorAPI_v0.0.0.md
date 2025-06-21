@@ -1,126 +1,93 @@
+# 📘 JSON Schema: Application External Types
 
-# Embedded Sensor Device – MQTT Interface Documentation
+This schema defines the structure of messages used for communication between an embedded system and an application interface. It supports data reporting, command issuance, and command response for sensors.
 
-The IoCloud Datalogger monitors a collection of temperature, analog, and voltage/current sensors. It uses **MQTT** for data communication and publishes sensor data, calibration requests/responses, and system status/error messages in **JSON** format.
+## 🔍 Schema Overview
 
----
+The schema includes definitions for:
 
-## 📡 MQTT Topic Structure
-
-### 🔹 General Topic Format
-
-```
-<device_id>/<action>/<sensor_type>/<sensor_id>
-```
-
-- `device_id`: Unique device identifier (e.g., `device123`)
-- `action`: One of `read`, `calibrate`, `status`
-- `sensor_type`: One of `temperature`, `analog`, `voltage`, `current`
-- `sensor_id`: Sensor identifier (e.g., `0`, `1`, ..., `19`)
-
-### 🔹 Topic Examples
-
-| Action     | Topic Example                                     | Description                            |
-|:----------:|:-------------------------------------------------:|:--------------------------------------:|
-| Read       | `iocloud/device123/read/temperature/0`            | Auto-published temperature temperature |
-| Calibrate  | `iocloud/device123/calibrate/request/analog/0`    | Send calibration message               |
-| Calibrate  | `iocloud/device123/calibrate/response/analog/0`   | Send or receive calibration message    |
-| Status     | `iocloud/device123/status/temperature/0`          | Sensor status report                   |
+- Sensor data reports (`device_report_st`, `sensor_report_st`)
+- Commands (`command_st`)
+- Command responses (`command_response_st`)
+- Enums for data type, command type, and command status
 
 ---
 
-## 📦 JSON Payload Examples
+## 💡 Use Cases
 
-### ✅ Sensor Data Payload
+### 1. ✅ Sensor Data Report
 
-```json
-{
-  "value": 25.63,
-  "timestamp": "2025-06-01T14:03:25Z"
-}
-```
-
-### 🛠️ Calibration Request
+A message sent from the device containing current sensor readings:
 
 ```json
 {
-  "gain": 12.0,
-  "offset": 12.0,
+  "timestamp": "2025-07-10T14:30:00",
+  "sensors": [
+    { "value": 23.5, "active": 1 },
+    { "value": 24.1, "active": 1 },
+    { "value": 23.5, "active": 1 },
+    { "value": 24.1, "active": 1 },
+    { "value": 23.5, "active": 1 },
+    { "value": 24.1, "active": 1 },
+    { "value": 23.5, "active": 1 },
+    { "value": 24.1, "active": 1 },
+    { "value": 23.5, "active": 1 },
+    { "value": 24.1, "active": 1 },
+    { "value": 23.5, "active": 1 },
+    { "value": 24.1, "active": 1 },
+    { "value": 23.5, "active": 1 },
+    { "value": 24.1, "active": 1 },
+    { "value": 23.5, "active": 1 },
+    { "value": 24.1, "active": 1 },
+    { "value": 23.5, "active": 1 },
+    { "value": 24.1, "active": 1 },
+    { "value": 23.5, "active": 1 },
+    { "value": 24.1, "active": 1 },
+    { "value": 23.5, "active": 1 },
+    { "value": 24.1, "active": 1 },
+    { "value": 00.0, "active": 0 },
+    { "value": 00.0, "active": 0 }
+  ],
+  "num_of_channels": 24
 }
 ```
+2. ⚙️ Command to Set Calibration
 
-### 🔁 Calibration Response Success
-
-```json
+Command sent to configure calibration settings on a sensor:
+``` json
 {
-  "status": 0,
+  "command_index": "CMD_SET_CALIBRATION",
+  "sensor_index": 1,
+  "payload": {
+      "gain": 1.02,
+      "offset": -0.15
+  }
 }
 ```
+3. 🟢 Command Response
 
-### 🔁 Calibration Response Error
-
-```json
+Response from the device after a command is processed:
+``` json
 {
-  "status": 201,
+  "command_index": "CMD_SET_CALIBRATION",
+  "command_status": "COMMAND_SUCCESS",
+  "sensor_index": 1
 }
 ```
 
-### ℹ️ Status Message
+📎 Related Types and Enums
 
-```json
-{
-  "uptime": 86400,
-  "error_code": 0,
-  "timestamp": "2025-06-01T14:00:00Z"
-}
-```
+    app_data_type_et: "DATA_TYPE_REPORT", "DATA_TYPE_COMMAND", "DATA_TYPE_COMMAND_RESPONSE"
 
-### ❌ Error Report in Status Message
+    command_index_et: "CMD_GET_TIME", "CMD_SET_CALIBRATION"
 
-```json
-{
-  "uptime": 86400,
-  "error_code": 102,
-  "timestamp": "2025-06-01T14:00:00Z"
-}
-```
+    command_status_et: "COMMAND_SUCCESS", "COMMAND_FAIL", "COMMAND_CALIBRATION_FAIL"
 
----
+✅ Compliance
 
-## 📋 Sensor Reference Table
+This schema follows JSON Schema Draft-07.
 
-| Sensor Type   | Sensor ID Range  | Description             |
-|:-------------:|:----------------:|:-----------------------:|
-| `temperature` | `0`–`19`         | Temperature Sensors     |
-| `analog`      | `20`–`21`        | 4–20 mA Analog Sensors  |
-| `voltage`     | `22`             | Voltage Sensor (0–10 V) |
-| `current`     | `23`             | Current Sensor (0–10 A) |
+You can use tools like AJV or jsonschema in Python to validate your payloads against this schema.
+📂 License
 
----
-
-## ✅ Best Practices
-
-- Subscribe to `iocloud/<device_id>/read/+/#` to receive all sensor data from a device.
-- Use retained messages for status and error updates.
-- Validate calibration responses before applying corrections.
-- Use QoS 1 or higher for data reliability.
-- All timestamps should be in ISO 8601 format (`YYYY-MM-DDTHH:MM:SSZ`).
-
----
-
-## 🚀 Example Usage
-
-### Subscribe to all temperature readings from device123:
-```bash
-mosquitto_sub -h mqtt.example.com -t "iocloud/device123/read/temperature/+" -v
-```
-
-### Send calibration for analog sensor 0 on device123:
-```bash
-mosquitto_pub -h mqtt.example.com -t "iocloud/device123/calibrate/request/analog/0" -m '{
-  "gain": 12.0,
-  "offset": 12.0,
-}'
-```
-
----
+MIT
